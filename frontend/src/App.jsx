@@ -2,38 +2,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useTTS } from "./hooks/useTTS.js";
 import { GOLDEN_PATH_RESULT } from "./data/goldenPath.js";
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const T = {
-  bg: "#0E0C08",
-  surface: "#161208",
-  surface2: "#1E1A0E",
-  parchment: "#F2E9D8",
-  parchmentDim: "#9A8E78",
-  parchmentFaint: "#3E3828",
-  gold: "#C9A84C",
-  goldLight: "rgba(201,168,76,0.10)",
-  goldBorder: "rgba(201,168,76,0.22)",
-  crimson: "#B8312F",
-  crimsonLight: "rgba(184,49,47,0.12)",
-  crimsonBorder: "rgba(184,49,47,0.28)",
-  purple: "#7B5EA7",
-  purpleLight: "rgba(123,94,167,0.12)",
-  green: "#4E7A50",
-  greenLight: "rgba(78,122,80,0.12)",
-  border: "rgba(242,233,216,0.07)",
-  borderBright: "rgba(242,233,216,0.14)",
-  shadow: "0 2px 16px rgba(0,0,0,0.55)",
-  shadowMd: "0 6px 32px rgba(0,0,0,0.65)",
-  shadowGold: "0 4px 24px rgba(201,168,76,0.18)",
-  radius: "10px",
-  radiusSm: "6px",
-  radiusLg: "16px",
-  radiusFull: "100px",
-  fontDisplay: "'Cormorant Garamond', 'Doors', serif",
-  fontBody: "'DM Sans', 'Nunito', sans-serif",
-  fontDoors: "'Doors', 'Cormorant Garamond', serif",
-};
+import { T } from "./lib/tokens.js";
+import { MarketingHome } from "./components/MarketingHome.jsx";
+import { LoadingCrest } from "./components/LoadingCrest.jsx";
 
 // ─── Agent Steps Metadata ─────────────────────────────────────────────────────
 const STEPS_META = {
@@ -155,105 +126,6 @@ const GLOBAL_CSS = `
     background-size: 200px 200px;
   }
 `;
-
-// ─── WebGL Shader Background ──────────────────────────────────────────────────
-const SHADER_SRC = `#version 300 es
-precision highp float;
-out vec4 O;
-uniform vec2 resolution;
-uniform float time;
-#define FC gl_FragCoord.xy
-#define T time
-#define R resolution
-#define MN min(R.x,R.y)
-float rnd(vec2 p){p=fract(p*vec2(12.9898,78.233));p+=dot(p,p+34.56);return fract(p.x*p.y);}
-float noise(in vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);float a=rnd(i),b=rnd(i+vec2(1,0)),c=rnd(i+vec2(0,1)),d=rnd(i+1.);return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);}
-float fbm(vec2 p){float t=.0,a=1.;mat2 m=mat2(1.,-.5,.2,1.2);for(int i=0;i<5;i++){t+=a*noise(p);p*=2.*m;a*=.5;}return t;}
-float clouds(vec2 p){float d=1.,t=.0;for(float i=.0;i<3.;i++){float a=d*fbm(i*10.+p.x*.2+.2*(1.+i)*p.y+d+i*i+p);t=mix(t,d,a);d=a;p*=2./(i+1.);}return t;}
-void main(void){
-  vec2 uv=(FC-.5*R)/MN,st=uv*vec2(2,1);
-  vec3 col=vec3(0);
-  float bg=clouds(vec2(st.x+T*.5,-st.y));
-  uv*=1.-.3*(sin(T*.2)*.5+.5);
-  for(float i=1.;i<12.;i++){
-    uv+=.1*cos(i*vec2(.1+.01*i,.8)+i*i+T*.5+.1*uv.x);
-    vec2 p=uv;
-    float d=length(p);
-    col+=.00125/d*(cos(sin(i)*vec3(1,2,3))+1.);
-    float b=noise(i+p+bg*1.731);
-    col+=.002*b/length(max(p,vec2(b*p.x*.02,p.y)));
-    col=mix(col,vec3(bg*.25,bg*.137,bg*.05),d);
-  }
-  O=vec4(col,1);
-}`;
-
-const VERTEX_SRC = `#version 300 es
-precision highp float;
-in vec4 position;
-void main(){ gl_Position = position; }`;
-
-function useShaderBackground() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const gl = canvas.getContext("webgl2");
-    if (!gl) return;
-    const compile = (shader, src) => {
-      gl.shaderSource(shader, src);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
-        console.error(gl.getShaderInfoLog(shader));
-    };
-    const vs = gl.createShader(gl.VERTEX_SHADER);
-    const fs = gl.createShader(gl.FRAGMENT_SHADER);
-    compile(vs, VERTEX_SRC);
-    compile(fs, SHADER_SRC);
-    const prog = gl.createProgram();
-    gl.attachShader(prog, vs);
-    gl.attachShader(prog, fs);
-    gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
-      console.error(gl.getProgramInfoLog(prog));
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([-1, 1, -1, -1, 1, 1, 1, -1]),
-      gl.STATIC_DRAW,
-    );
-    const pos = gl.getAttribLocation(prog, "position");
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-    const uRes = gl.getUniformLocation(prog, "resolution");
-    const uTime = gl.getUniformLocation(prog, "time");
-    const resize = () => {
-      const dpr = Math.max(1, 0.5 * window.devicePixelRatio);
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    };
-    let raf;
-    const render = (now) => {
-      gl.clearColor(0, 0, 0, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(prog);
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, now * 1e-3);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      raf = requestAnimationFrame(render);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-    raf = requestAnimationFrame(render);
-    return () => {
-      window.removeEventListener("resize", resize);
-      cancelAnimationFrame(raf);
-      gl.deleteProgram(prog);
-    };
-  }, []);
-  return canvasRef;
-}
 
 // ─── Hover Card Wrapper ───────────────────────────────────────────────────────
 function HoverCard({ delay = "0s", children }) {
@@ -1338,290 +1210,6 @@ function InputForm({ onSubmit, onDemo }) {
   );
 }
 
-// ─── Landing Hero ─────────────────────────────────────────────────────────────
-function LandingHero({ onEnter, onDemo }) {
-  const canvasRef = useShaderBackground();
-  return (
-    <div
-      style={{
-        position: "relative",
-        width: "100vw",
-        marginLeft: "calc(50% - 50vw)",
-        height: "calc(100vh - 58px)",
-        overflow: "hidden",
-        background: "#000",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          touchAction: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.75) 100%)",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Content overlay */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 10,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          padding: "0 24px",
-        }}
-      >
-        {/* Trust badge — fadeInDown 0ms */}
-        <div
-          style={{
-            marginBottom: 32,
-            animation: "fadeInDown 0.8s ease-out both",
-          }}
-        >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 24px",
-              background: "rgba(201,168,76,0.10)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(201,168,76,0.30)",
-              borderRadius: T.radiusFull,
-              fontSize: 13,
-              fontWeight: 500,
-              color: "#F2E9D8",
-              fontFamily: T.fontBody,
-            }}
-          >
-            <span style={{ color: "#C9A84C" }}>✦</span>
-            <span>Your Knight in Shining Alibi</span>
-          </div>
-        </div>
-
-        {/* Headline — two lines */}
-        <div style={{ textAlign: "center", marginBottom: 22 }}>
-          {/* Line 1 — Doors font, gold gradient, delay 200ms */}
-          <h1
-            style={{
-              fontSize: "clamp(58px, 13vw, 110px)",
-              fontWeight: 900,
-              fontFamily: T.fontDoors,
-              background: "linear-gradient(90deg, #FDBA74, #C9A84C, #FCD34D)",
-              backgroundSize: "200% 200%",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              lineHeight: 1.0,
-              marginBottom: 4,
-              letterSpacing: "-2px",
-              animation:
-                "gradientShift 3s ease infinite, fadeInUp 0.8s ease-out 0.2s both",
-            }}
-          >
-            THE ALIBI
-          </h1>
-          {/* Line 2 — Cormorant Garamond italic, crimson→gold gradient, delay 400ms */}
-          <h2
-            style={{
-              fontSize: "clamp(18px, 3.5vw, 34px)",
-              fontWeight: 700,
-              fontStyle: "italic",
-              fontFamily: T.fontDisplay,
-              background: "linear-gradient(90deg, #F2E9D8, #C9A84C, #B8312F)",
-              backgroundSize: "200% 200%",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "1px",
-              animation:
-                "gradientShift 4s ease 0.5s infinite, fadeInUp 0.8s ease-out 0.4s both",
-            }}
-          >
-            Relationship Recovery Agent
-          </h2>
-        </div>
-
-        {/* Subtitle — delay 600ms */}
-        <div
-          style={{
-            maxWidth: 560,
-            textAlign: "center",
-            marginBottom: 28,
-            animation: "fadeInUp 0.8s ease-out 0.6s both",
-          }}
-        >
-          <p
-            style={{
-              fontSize: "clamp(14px, 2vw, 18px)",
-              fontWeight: 300,
-              color: "rgba(242,233,216,0.85)",
-              lineHeight: 1.8,
-              fontFamily: T.fontBody,
-            }}
-          >
-            You forgot. You flaked. You went MIA. The agent constructs your
-            alibi, writes your apology, picks your gift, and schedules the
-            follow-up.{" "}
-            <strong style={{ fontWeight: 700, color: "#F2E9D8" }}>
-              You just show up.
-            </strong>
-          </p>
-        </div>
-
-        {/* Step trail — delay 600ms */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-            flexWrap: "wrap",
-            justifyContent: "center",
-            marginBottom: 36,
-            animation: "fadeInUp 0.8s ease-out 0.6s both",
-          }}
-        >
-          {[
-            ["🔍", "Research"],
-            ["⚖️", "Assess"],
-            ["📜", "Alibi"],
-            ["✍️", "Apology"],
-            ["🎁", "Gift"],
-            ["📅", "Follow-up"],
-          ].map(([icon, label], i, arr) => (
-            <span
-              key={label}
-              style={{ display: "flex", alignItems: "center", gap: 5 }}
-            >
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  background: "rgba(255,255,255,0.07)",
-                  backdropFilter: "blur(8px)",
-                  WebkitBackdropFilter: "blur(8px)",
-                  border: "1px solid rgba(201,168,76,0.20)",
-                  borderRadius: T.radiusFull,
-                  padding: "5px 12px",
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: "rgba(242,233,216,0.8)",
-                  fontFamily: T.fontBody,
-                }}
-              >
-                {icon} {label}
-              </span>
-              {i < arr.length - 1 && (
-                <span
-                  style={{ color: "#C9A84C", fontSize: 12, fontWeight: 700 }}
-                >
-                  →
-                </span>
-              )}
-            </span>
-          ))}
-        </div>
-
-        {/* CTAs — delay 800ms */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
-            gap: 14,
-            justifyContent: "center",
-            animation: "fadeInUp 0.8s ease-out 0.8s both",
-          }}
-        >
-          {/* Primary — animated gradient, dark text, pill */}
-          <button
-            onClick={onEnter}
-            style={{
-              padding: "15px 36px",
-              background: "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
-              backgroundSize: "200% auto",
-              animation: "gradientShift 3s ease infinite",
-              border: "none",
-              borderRadius: T.radiusFull,
-              color: "#0E0C08",
-              fontSize: 16,
-              fontWeight: 700,
-              fontFamily: T.fontBody,
-              cursor: "pointer",
-              boxShadow: "0 4px 24px rgba(184,49,47,0.35)",
-              transition: "transform 0.3s ease, box-shadow 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.05)";
-              e.currentTarget.style.boxShadow =
-                "0 8px 36px rgba(184,49,47,0.5)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 24px rgba(184,49,47,0.35)";
-            }}
-          >
-            Confess Your Crime →
-          </button>
-
-          {/* Secondary — gold frosted glass, pill */}
-          <button
-            onClick={onDemo}
-            style={{
-              padding: "15px 36px",
-              background: "rgba(201,168,76,0.08)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              border: "1px solid rgba(201,168,76,0.28)",
-              borderRadius: T.radiusFull,
-              color: "#F2E9D8",
-              fontSize: 16,
-              fontWeight: 500,
-              fontFamily: T.fontBody,
-              cursor: "pointer",
-              transition:
-                "transform 0.3s ease, background 0.3s ease, border-color 0.3s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.05)";
-              e.currentTarget.style.background = "rgba(201,168,76,0.16)";
-              e.currentTarget.style.borderColor = "rgba(201,168,76,0.50)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.background = "rgba(201,168,76,0.08)";
-              e.currentTarget.style.borderColor = "rgba(201,168,76,0.28)";
-            }}
-          >
-            Watch the Demo Run
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Loading Screen ───────────────────────────────────────────────────────────
 function LoadingScreen() {
   return (
@@ -1684,6 +1272,7 @@ function AppCore({ auth }) {
   } = auth;
 
   const [phase, setPhase] = useState("landing");
+  const [introDone, setIntroDone] = useState(false);
   const [steps, setSteps] = useState([]);
   const [currentStep, setCurrentStep] = useState(null);
   const [result, setResult] = useState(null);
@@ -1845,113 +1434,115 @@ function AppCore({ auth }) {
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
 
       <div className="grain" style={{ minHeight: "100vh", background: T.bg }}>
-        {/* ── Header ── */}
-        <header
-          style={{
-            background: "rgba(14,12,8,0.85)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            borderBottom: `1px solid ${T.border}`,
-            padding: "0 32px",
-            height: 58,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            zIndex: 100,
-          }}
-        >
-          <button
-            onClick={() => {
-              setPhase(isAuthenticated ? "form" : "landing");
-              setResult(null);
-              setSteps([]);
-            }}
+        {phase !== "landing" && (
+          <header
             style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              textAlign: "left",
+              background: "rgba(14,12,8,0.85)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              borderBottom: `1px solid ${T.border}`,
+              padding: "0 32px",
+              height: 58,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "sticky",
+              top: 0,
+              zIndex: 100,
             }}
           >
-            <div
+            <button
+              onClick={() => {
+                setPhase("landing");
+                setResult(null);
+                setSteps([]);
+              }}
               style={{
-                fontSize: 17,
-                fontWeight: 700,
-                color: T.parchment,
-                letterSpacing: "0.5px",
-                lineHeight: 1,
-                fontFamily: T.fontDoors,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                textAlign: "left",
               }}
             >
-              THE ALIBI
-            </div>
-            <div
-              style={{
-                fontSize: 8,
-                fontWeight: 600,
-                color: T.gold,
-                letterSpacing: "3px",
-                marginTop: 2,
-                fontFamily: T.fontBody,
-              }}
-            >
-              RELATIONSHIP RECOVERY AGENT
-            </div>
-          </button>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {user?.email && (
-              <span
+              <div
                 style={{
-                  fontSize: 11,
-                  fontWeight: 400,
-                  color: T.parchmentDim,
-                  fontFamily: T.fontBody,
+                  fontSize: 18,
+                  fontWeight: 900,
+                  fontStyle: "italic",
+                  color: T.parchment,
+                  letterSpacing: "-0.02em",
+                  lineHeight: 1,
+                  fontFamily: T.fontDisplay,
                 }}
               >
-                {user.email}
-              </span>
-            )}
-            {isAuthenticated && auth !== MOCK_AUTH ? (
-              <button
-                onClick={() => logout({ returnTo: window.location.origin })}
+                Sir Alibi
+              </div>
+              <div
                 style={{
-                  background: "none",
-                  border: `1px solid ${T.border}`,
-                  borderRadius: T.radiusSm,
-                  padding: "6px 14px",
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: T.parchmentDim,
-                  fontFamily: T.fontBody,
-                  cursor: "pointer",
-                }}
-              >
-                Sign out
-              </button>
-            ) : !isAuthenticated ? (
-              <button
-                onClick={() => loginWithRedirect()}
-                style={{
-                  background: T.goldLight,
-                  border: `1px solid ${T.goldBorder}`,
-                  borderRadius: T.radiusSm,
-                  padding: "7px 18px",
-                  fontSize: 12,
+                  fontSize: 8,
                   fontWeight: 600,
                   color: T.gold,
+                  letterSpacing: "3px",
+                  marginTop: 2,
                   fontFamily: T.fontBody,
-                  cursor: "pointer",
                 }}
               >
-                Sign in
-              </button>
-            ) : null}
-          </div>
-        </header>
+                YOUR KNIGHT IN SHINING ALIBI
+              </div>
+            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {user?.email && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 400,
+                    color: T.parchmentDim,
+                    fontFamily: T.fontBody,
+                  }}
+                >
+                  {user.email}
+                </span>
+              )}
+              {isAuthenticated && auth !== MOCK_AUTH ? (
+                <button
+                  onClick={() => logout({ returnTo: window.location.origin })}
+                  style={{
+                    background: "none",
+                    border: `1px solid ${T.border}`,
+                    borderRadius: T.radiusSm,
+                    padding: "6px 14px",
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: T.parchmentDim,
+                    fontFamily: T.fontBody,
+                    cursor: "pointer",
+                  }}
+                >
+                  Sign out
+                </button>
+              ) : !isAuthenticated ? (
+                <button
+                  onClick={() => loginWithRedirect()}
+                  style={{
+                    background: T.goldLight,
+                    border: `1px solid ${T.goldBorder}`,
+                    borderRadius: T.radiusSm,
+                    padding: "7px 18px",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: T.gold,
+                    fontFamily: T.fontBody,
+                    cursor: "pointer",
+                  }}
+                >
+                  Sign in
+                </button>
+              ) : null}
+            </div>
+          </header>
+        )}
 
         {/* ── Page Content ── */}
         <main
@@ -1962,8 +1553,18 @@ function AppCore({ auth }) {
           }}
         >
           {/* LANDING */}
-          {phase === "landing" && (
-            <LandingHero onEnter={() => setPhase("form")} onDemo={runDemo} />
+          {phase === "landing" && !introDone && (
+            <LoadingCrest onDone={() => setIntroDone(true)} />
+          )}
+          {phase === "landing" && introDone && (
+            <MarketingHome
+              onSummonKnight={() => setPhase("form")}
+              onDemo={runDemo}
+              isAuthenticated={isAuthenticated}
+              onLogin={() => loginWithRedirect()}
+              onLogout={() => logout({ returnTo: window.location.origin })}
+              userEmail={user?.email}
+            />
           )}
 
           {/* FORM */}
