@@ -1,9 +1,13 @@
+const { createCalendarEvent } = require("../services/googleCalendarService");
+const { googleTokensStore } = require("./googleController");
+
 const {
   generateGoogleAuthUrl,
   exchangeCodeForTokens,
   isConnected,
   createDraftMessage,
 } = require("../services/googleGmail");
+const { sendGift } = require("../services/tremendousService");
 
 const { createCalendarEvent } = require("../services/googleCalendarService");
 const { googleTokensStore } = require("./googleController");
@@ -23,7 +27,9 @@ function googleAuthStart(req, res) {
   } catch (e) {
     console.error("googleAuthStart:", e);
     const hint =
-      e instanceof Error ? e.message : "Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI in backend/.env";
+      e instanceof Error
+        ? e.message
+        : "Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI in backend/.env";
     res.status(500).send(`Google OAuth is not configured.\n\n${hint}`);
   }
 }
@@ -32,8 +38,13 @@ async function googleAuthCallback(req, res) {
   try {
     const code = req.query.code;
     const err = req.query.error;
+    const state = req.query.state;
+
     if (err) {
-      const desc = String(req.query.error_description || "").replace(/\+/g, " ");
+      const desc = String(req.query.error_description || "").replace(
+        /\+/g,
+        " ",
+      );
       if (err === "access_denied") {
         return res.status(403).type("html").send(`<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Access denied</title></head>
@@ -49,31 +60,48 @@ async function googleAuthCallback(req, res) {
 <p style="color:#666;font-size:0.9rem">Technical: ${desc || err}</p>
 </body></html>`);
       }
-      return res
-        .status(400)
-        .send(`Google OAuth error: ${err} — ${desc}`);
+
+      return res.status(400).send(`Google OAuth error: ${err} — ${desc}`);
     }
+
     if (!code || typeof code !== "string") {
       return res.status(400).send("Missing authorization code");
     }
+<<<<<<< HEAD
+=======
+
+    // Calendar flow — store tokens for calendar and redirect with calendar flag
+    if (state === "calendar") {
+      const { google } = require("googleapis");
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        process.env.GOOGLE_REDIRECT_URI,
+      );
+      const { tokens } = await oauth2Client.getToken(code);
+      googleTokensStore.defaultUser = tokens;
+      return res.redirect("http://localhost:5173/?google_calendar_connected=1");
+    }
+
+    // Gmail flow (default)
+>>>>>>> tremendous
     await exchangeCodeForTokens(code);
 
     return res.redirect("http://localhost:5173/?google_gmail_connected=1");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("googleAuthCallback:", msg, e);
+
     let hint = "";
     if (/invalid_client/i.test(msg)) {
       hint =
-        "<p><strong>Client secret / client ID mismatch.</strong> Open <a href=\"https://console.cloud.google.com/apis/credentials\" target=\"_blank\" rel=\"noopener\">Google Cloud → APIs &amp; Services → Credentials</a>, select your <strong>OAuth 2.0 Client ID</strong> (type: Web application). Copy the <strong>Client ID</strong> and create a <strong>new Client secret</strong> if needed, then paste into <code>backend/.env</code> as <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> with no extra spaces or duplicate quotes. Both must be from the <em>same</em> OAuth client.</p>";
+        '<p><strong>Client secret / client ID mismatch.</strong> Open <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud → APIs &amp; Services → Credentials</a>, select your <strong>OAuth 2.0 Client ID</strong> (type: Web application). Copy the <strong>Client ID</strong> and create a <strong>new Client secret</strong> if needed, then paste into <code>backend/.env</code> as <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> with no extra spaces or duplicate quotes. Both must be from the <em>same</em> OAuth client.</p>';
     } else if (/invalid_grant/i.test(msg) || /redirect/i.test(msg)) {
       hint =
         "<p><strong>Typical fixes:</strong> In Google Cloud → Credentials, the <strong>Authorized redirect URI</strong> must match <code>GOOGLE_REDIRECT_URI</code> exactly (including <code>http://</code> vs <code>https://</code>, and <code>localhost</code> vs <code>127.0.0.1</code>). Start OAuth from the same host you registered. Authorization codes are one-time — use a fresh visit to <code>/api/auth/google/start</code>.</p>";
     }
-    res
-      .status(500)
-      .type("html")
-      .send(`<!DOCTYPE html>
+
+    res.status(500).type("html").send(`<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Token exchange failed</title></head>
 <body style="font-family:system-ui,sans-serif;max-width:44rem;padding:2rem;line-height:1.5">
 <h2>Failed to connect Google</h2>
@@ -118,9 +146,13 @@ async function createEmailDraft(req, res) {
       messageId: out.messageId,
     });
   } catch (error) {
-    if (error.code === "NOT_AUTHENTICATED" || error.message === "NOT_AUTHENTICATED") {
+    if (
+      error.code === "NOT_AUTHENTICATED" ||
+      error.message === "NOT_AUTHENTICATED"
+    ) {
       return res.status(401).json({ ok: false, error: "NOT_AUTHENTICATED" });
     }
+
     console.error("createEmailDraft error:", error);
     return res.status(500).json({
       ok: false,
@@ -129,7 +161,11 @@ async function createEmailDraft(req, res) {
   }
 }
 
+<<<<<<< HEAD
 function buildFollowupEvent({ followup, person_name }) {
+=======
+function buildFollowupEvent({ followup }) {
+>>>>>>> tremendous
   const start = new Date();
   start.setDate(start.getDate() + 3);
   start.setHours(12, 0, 0, 0);
@@ -195,10 +231,57 @@ async function scheduleFollowup(req, res) {
   }
 }
 
+async function sendTremendousGift(req, res) {
+  try {
+    const {
+      recipient_name,
+      recipient_email,
+      ai_evaluation_score,
+      external_id,
+      failure_id,
+      apology_message,
+    } = req.body || {};
+
+    if (ai_evaluation_score === undefined || ai_evaluation_score === null) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing ai_evaluation_score",
+      });
+    }
+
+    const response = await sendGift({
+      recipientName: recipient_name,
+      recipientEmail: recipient_email,
+      aiEvaluationScore: ai_evaluation_score,
+      externalId: external_id || failure_id,
+      message: apology_message || undefined,
+    });
+
+    return res.status(200).json({
+      ok: true,
+      status: response.status,
+      reward: response.reward,
+      external_id: response.external_id || external_id || failure_id || null,
+      order_id: response.order?.id || null,
+      message: response.message || null,
+    });
+  } catch (error) {
+    console.error("sendTremendousGift error:", error);
+    const msg = error?.message || "Failed to send gift";
+    const isClientError =
+      /required|must be a number|missing/i.test(msg);
+    return res.status(isClientError ? 400 : 500).json({
+      ok: false,
+      error: msg,
+    });
+  }
+}
+
 module.exports = {
   googleAuthStart,
   googleAuthCallback,
   authStatus,
   createEmailDraft,
   scheduleFollowup,
+  sendTremendousGift,
 };

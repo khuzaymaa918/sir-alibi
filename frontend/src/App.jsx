@@ -714,10 +714,32 @@ function ApologyCard({ apology, onDraftEmail, emailLoading, emailDone }) {
 }
 
 // ─── Gift Card ────────────────────────────────────────────────────────────────
-function GiftCard({ gift }) {
+function GiftCard({ gift, onSendGift, giftLoading, giftDone }) {
   return (
     <div style={cardWrap(T.purple)}>
+<<<<<<< HEAD
       <CardHead icon="🎁" title="Recovery Offering" color={T.purple} />
+=======
+      <CardHead icon="🎁" title="Recovery Offering" color={T.purple}>
+        {onSendGift && (
+          <ActionBtn
+            onClick={onSendGift}
+            disabled={giftLoading || giftDone}
+            color={giftDone ? T.green : T.purple}
+          >
+            {giftLoading ? (
+              <>
+                <Spinner size={11} color={T.purple} /> Sending…
+              </>
+            ) : giftDone ? (
+              "✓ Gift Sent"
+            ) : (
+              "Send Tremendous Gift"
+            )}
+          </ActionBtn>
+        )}
+      </CardHead>
+>>>>>>> tremendous
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div>
           <div style={metaLabel}>PRIMARY RECOMMENDATION</div>
@@ -942,11 +964,13 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
     budget: "20_50",
     medium: "text",
     additional_context: "",
+    recipientEmail: "",
   });
   const [loading, setLoading] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const canSubmit =
     form.name.trim() &&
+    form.recipientEmail.trim() &&
     (form.failure_type !== "other" || form.custom_failure.trim());
 
   const handleSubmit = async () => {
@@ -1013,9 +1037,10 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
           />
         </div>
         <div>
-          {lbl("Relationship")}
-          <select
+          {lbl("Their Email")}
+          <input
             style={field}
+<<<<<<< HEAD
             value={form.relationship}
             onChange={(e) => set("relationship", e.target.value)}
             onFocus={(e) => (e.target.style.borderColor = T.gold)}
@@ -1027,7 +1052,33 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
               </option>
             ))}
           </select>
+=======
+            type="email"
+            placeholder="sarah@example.com"
+            value={form.recipientEmail}
+            onChange={(e) => set("recipientEmail", e.target.value)}
+            onFocus={(e) => (e.target.style.borderColor = T.gold)}
+            onBlur={(e) => (e.target.style.borderColor = T.border)}
+          />
+>>>>>>> tremendous
         </div>
+      </div>
+      
+      <div style={{ marginBottom: 14 }}>
+        {lbl("Relationship")}
+        <select
+          style={field}
+          value={form.relationship}
+          onChange={(e) => set("relationship", e.target.value)}
+          onFocus={(e) => (e.target.style.borderColor = T.gold)}
+          onBlur={(e) => (e.target.style.borderColor = T.border)}
+        >
+          {RELATIONSHIP_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div style={{ marginBottom: 14 }}>
@@ -1166,10 +1217,15 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
         style={{
           width: "100%",
           padding: "14px",
+<<<<<<< HEAD
           background:
             loading || !canSubmit
               ? "rgba(201,168,76,0.08)"
               : "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
+=======
+          backgroundColor: (loading || !canSubmit) ? "rgba(201,168,76,0.08)" : "transparent",
+          backgroundImage: (loading || !canSubmit) ? "none" : "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
+>>>>>>> tremendous
           backgroundSize: "200% auto",
           animation:
             loading || !canSubmit ? "none" : "gradientShift 3s ease infinite",
@@ -1293,6 +1349,10 @@ function AppCore({ auth }) {
   const [actionLoading, setActionLoading] = useState({});
   const [actionDone, setActionDone] = useState({});
   const [currentCrimeLevel, setCurrentCrimeLevel] = useState("minor");
+<<<<<<< HEAD
+=======
+  const [submittedForm, setSubmittedForm] = useState(null);
+>>>>>>> tremendous
 
   const handleContextInput = useCallback((value) => {
     const lower = value.toLowerCase();
@@ -1411,6 +1471,7 @@ function AppCore({ auth }) {
     };
 
     run();
+<<<<<<< HEAD
   }, []);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1517,6 +1578,9 @@ function AppCore({ auth }) {
 
     run();
   }, []);
+=======
+  }, [getAccessTokenSilently]);
+>>>>>>> tremendous
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
@@ -1588,6 +1652,10 @@ function AppCore({ auth }) {
   }, [applyAgentStep, finalizeRunningSteps, clearFakeRunTimers, setPhase, setResult, setFailureId, setCompletedStepKeys, setCurrentStep, setActionDone]);
 
   async function submitForm(formData) {
+<<<<<<< HEAD
+=======
+      setSubmittedForm(formData);
+>>>>>>> tremendous
       const headers = { "Content-Type": "application/json" };
       try {
         const token = await getAccessTokenSilently();
@@ -1743,6 +1811,49 @@ function AppCore({ auth }) {
     }
   }
 
+<<<<<<< HEAD
+=======
+  async function sendGift() {
+    if (!failureId || !result?.gift) return;
+    actL("gift", true);
+    try {
+      const headers = { "Content-Type": "application/json" };
+      try {
+        const t = await getAccessTokenSilently();
+        if (t) headers["Authorization"] = `Bearer ${t}`;
+      } catch {}
+
+      const apiUrl =
+        (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+        "http://localhost:3001";
+
+      const res = await fetch(`${apiUrl}/api/send-gift`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+           recipient_name: submittedForm?.name || result.research?.name || "Friend",
+           recipient_email: submittedForm?.recipientEmail || "example@example.com",
+           ai_evaluation_score: result.damage_assessment?.score || 50,
+           failure_id: failureId,
+           apology_message: result.apology?.body
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Gift request failed: ${res.status}`);
+      }
+
+      actD("gift");
+      showToast("Gift card successfully sent via Tremendous!", "success");
+    } catch (error) {
+      console.error("gift error:", error);
+      showToast("Couldn't send Tremendous gift.", "error");
+    } finally {
+      actL("gift", false);
+    }
+  }
+
+>>>>>>> tremendous
   if (isLoading) return <LoadingScreen />;
 
   return (
@@ -1751,6 +1862,7 @@ function AppCore({ auth }) {
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
 
       <div className="grain" style={{ minHeight: "100vh", background: T.bg }}>
+<<<<<<< HEAD
         <div style={{
           position: 'fixed',
           inset: 0,
@@ -1770,6 +1882,8 @@ function AppCore({ auth }) {
           background: 'radial-gradient(ellipse 60% 70% at 30% 50%, rgba(184,49,47,0.08), transparent)',
           pointerEvents: 'none'
         }} />
+=======
+>>>>>>> tremendous
         <div style={{ position: "relative", zIndex: 10, width: "100%" }}>
         {phase !== "landing" && (
           <header
@@ -1915,8 +2029,13 @@ function AppCore({ auth }) {
                 zIndex: 10,
                 display: "flex",
                 alignItems: "center",
+<<<<<<< HEAD
                 justifyContent: "flex-start",
                 padding: "0 0 0 5%",
+=======
+                justifyContent: "flex-end",
+                padding: "0 5% 0 0",
+>>>>>>> tremendous
               }}
             >
               <div
@@ -2095,7 +2214,16 @@ function AppCore({ auth }) {
               )}
               {result.gift && (
                 <HoverCard delay="0.35s">
+<<<<<<< HEAD
                   <GiftCard gift={result.gift} />
+=======
+                  <GiftCard 
+                     gift={result.gift} 
+                     onSendGift={failureId !== "demo-run-001" ? sendGift : null}
+                     giftLoading={actionLoading.gift}
+                     giftDone={actionDone.gift}
+                  />
+>>>>>>> tremendous
                 </HoverCard>
               )}
               {result.followup && (

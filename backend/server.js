@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const googleRoutes = require("./routes/googleRoutes");
 
+const googleRoutes = require("./routes/googleRoutes");
 const agentRoutes = require("./routes/agentRoutes");
 const integrationRoutes = require("./routes/integrationRoutes");
 
