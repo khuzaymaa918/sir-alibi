@@ -106,18 +106,20 @@ async function sendGift({ recipientName, recipientEmail, aiEvaluationScore, exte
         payment: {
           funding_source_id: cleanEnv("FUNDING_SOURCE_ID"),
         },
-        reward: {
-          campaign_id: cleanEnv("CAMPAIGN_ID"),
-          value: {
-            denomination: reward.amount,
-            currency_code: "USD"
+        rewards: [
+          {
+            campaign_id: cleanEnv("CAMPAIGN_ID"),
+            value: {
+              denomination: reward.amount,
+              currency_code: "USD",
+            },
+            delivery: {
+              method: "EMAIL",
+              ...(message ? { meta: { message: String(message).trim().slice(0, 300) } } : {}),
+            },
+            recipient: { name, email },
           },
-          delivery: {
-            method: "EMAIL",
-            ...(message ? { meta: { message: String(message).trim().slice(0, 300) } } : {}),
-          },
-          recipient: { name, email }
-        },
+        ],
         external_id: idempotencyId,
       }),
     });

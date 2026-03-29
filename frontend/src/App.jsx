@@ -714,10 +714,28 @@ function ApologyCard({ apology, onDraftEmail, emailLoading, emailDone }) {
 }
 
 // ─── Gift Card ────────────────────────────────────────────────────────────────
-function GiftCard({ gift }) {
+function GiftCard({ gift, onSendGift, giftLoading, giftDone }) {
   return (
     <div style={cardWrap(T.purple)}>
-      <CardHead icon="🎁" title="Recovery Offering" color={T.purple} />
+      <CardHead icon="🎁" title="Recovery Offering" color={T.purple}>
+        {onSendGift && (
+          <ActionBtn
+            onClick={onSendGift}
+            disabled={giftLoading || giftDone}
+            color={giftDone ? T.green : T.purple}
+          >
+            {giftLoading ? (
+              <>
+                <Spinner size={11} color={T.purple} /> Sending…
+              </>
+            ) : giftDone ? (
+              "✓ Gift Sent"
+            ) : (
+              "Send Tremendous Gift"
+            )}
+          </ActionBtn>
+        )}
+      </CardHead>
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div>
           <div style={metaLabel}>PRIMARY RECOMMENDATION</div>
@@ -942,11 +960,13 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
     budget: "20_50",
     medium: "text",
     additional_context: "",
+    recipientEmail: "",
   });
   const [loading, setLoading] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const canSubmit =
     form.name.trim() &&
+    form.recipientEmail.trim() &&
     (form.failure_type !== "other" || form.custom_failure.trim());
 
   const handleSubmit = async () => {
@@ -1013,21 +1033,34 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
           />
         </div>
         <div>
-          {lbl("Relationship")}
-          <select
+          {lbl("Their Email")}
+          <input
             style={field}
-            value={form.relationship}
-            onChange={(e) => set("relationship", e.target.value)}
+            type="email"
+            placeholder="sarah@example.com"
+            value={form.recipientEmail}
+            onChange={(e) => set("recipientEmail", e.target.value)}
             onFocus={(e) => (e.target.style.borderColor = T.gold)}
             onBlur={(e) => (e.target.style.borderColor = T.border)}
-          >
-            {RELATIONSHIP_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+          />
         </div>
+      </div>
+      
+      <div style={{ marginBottom: 14 }}>
+        {lbl("Relationship")}
+        <select
+          style={field}
+          value={form.relationship}
+          onChange={(e) => set("relationship", e.target.value)}
+          onFocus={(e) => (e.target.style.borderColor = T.gold)}
+          onBlur={(e) => (e.target.style.borderColor = T.border)}
+        >
+          {RELATIONSHIP_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div style={{ marginBottom: 14 }}>
@@ -1166,10 +1199,8 @@ function InputForm({ onSubmit, onDemo, onContextInput }) {
         style={{
           width: "100%",
           padding: "14px",
-          background:
-            loading || !canSubmit
-              ? "rgba(201,168,76,0.08)"
-              : "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
+          backgroundColor: (loading || !canSubmit) ? "rgba(201,168,76,0.08)" : "transparent",
+          backgroundImage: (loading || !canSubmit) ? "none" : "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
           backgroundSize: "200% auto",
           animation:
             loading || !canSubmit ? "none" : "gradientShift 3s ease infinite",
@@ -1293,6 +1324,7 @@ function AppCore({ auth }) {
   const [actionLoading, setActionLoading] = useState({});
   const [actionDone, setActionDone] = useState({});
   const [currentCrimeLevel, setCurrentCrimeLevel] = useState("minor");
+  const [submittedForm, setSubmittedForm] = useState(null);
 
   const handleContextInput = useCallback((value) => {
     const lower = value.toLowerCase();
@@ -1411,112 +1443,7 @@ function AppCore({ auth }) {
     };
 
     run();
-  }, []);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const connected = params.get("google_gmail_connected");
-
-    if (connected !== "1") return;
-
-    const pending = localStorage.getItem("pendingGmailPayload");
-    if (!pending) return;
-
-    const run = async () => {
-      try {
-        const apiUrl =
-          (typeof import.meta !== "undefined" &&
-            import.meta.env?.VITE_API_URL) ||
-          "http://localhost:3001";
-
-        const headers = { "Content-Type": "application/json" };
-
-        try {
-          const t = await getAccessTokenSilently();
-          if (t) headers["Authorization"] = `Bearer ${t}`;
-        } catch {}
-
-        const emailRes = await fetch(`${apiUrl}/api/send-apology-email`, {
-          method: "POST",
-          headers,
-          body: pending,
-        });
-
-        const emailJson = await emailRes.json().catch(() => ({}));
-
-        if (!emailRes.ok) {
-          throw new Error(
-            emailJson.error || `Gmail retry failed: ${emailRes.status}`,
-          );
-        }
-
-        localStorage.removeItem("pendingGmailPayload");
-        actD("email");
-        showToast("Email drafted in Gmail!", "success");
-
-        const url = new URL(window.location.href);
-        url.searchParams.delete("google_gmail_connected");
-        window.history.replaceState({}, "", url.toString());
-      } catch (error) {
-        console.error("gmail retry error:", error);
-        showToast("Couldn't add Gmail draft.", "error");
-      }
-    };
-
-    run();
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const connected = params.get("google_gmail_connected");
-
-    if (connected !== "1") return;
-
-    const pending = localStorage.getItem("pendingGmailPayload");
-    if (!pending) return;
-
-    const run = async () => {
-      try {
-        const apiUrl =
-          (typeof import.meta !== "undefined" &&
-            import.meta.env?.VITE_API_URL) ||
-          "http://localhost:3001";
-
-        const headers = { "Content-Type": "application/json" };
-
-        try {
-          const t = await getAccessTokenSilently();
-          if (t) headers["Authorization"] = `Bearer ${t}`;
-        } catch {}
-
-        const emailRes = await fetch(`${apiUrl}/api/send-apology-email`, {
-          method: "POST",
-          headers,
-          body: pending,
-        });
-
-        const emailJson = await emailRes.json().catch(() => ({}));
-
-        if (!emailRes.ok) {
-          throw new Error(
-            emailJson.error || `Gmail retry failed: ${emailRes.status}`,
-          );
-        }
-
-        localStorage.removeItem("pendingGmailPayload");
-        actD("email");
-        showToast("Email drafted in Gmail!", "success");
-
-        const url = new URL(window.location.href);
-        url.searchParams.delete("google_gmail_connected");
-        window.history.replaceState({}, "", url.toString());
-      } catch (error) {
-        console.error("gmail retry error:", error);
-        showToast("Couldn't add Gmail draft.", "error");
-      }
-    };
-
-    run();
-  }, []);
+  }, [getAccessTokenSilently]);
 
   const showToast = (message, type = "error") => {
     setToast({ message, type });
@@ -1588,6 +1515,7 @@ function AppCore({ auth }) {
   }, [applyAgentStep, finalizeRunningSteps, clearFakeRunTimers, setPhase, setResult, setFailureId, setCompletedStepKeys, setCurrentStep, setActionDone]);
 
   async function submitForm(formData) {
+      setSubmittedForm(formData);
       const headers = { "Content-Type": "application/json" };
       try {
         const token = await getAccessTokenSilently();
@@ -1740,6 +1668,46 @@ function AppCore({ auth }) {
       showToast("Couldn't reach Calendar integration.", "error");
     } finally {
       actL("followup", false);
+    }
+  }
+
+  async function sendGift() {
+    if (!failureId || !result?.gift) return;
+    actL("gift", true);
+    try {
+      const headers = { "Content-Type": "application/json" };
+      try {
+        const t = await getAccessTokenSilently();
+        if (t) headers["Authorization"] = `Bearer ${t}`;
+      } catch {}
+
+      const apiUrl =
+        (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+        "http://localhost:3001";
+
+      const res = await fetch(`${apiUrl}/api/send-gift`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+           recipient_name: submittedForm?.name || result.research?.name || "Friend",
+           recipient_email: submittedForm?.recipientEmail || "example@example.com",
+           ai_evaluation_score: result.damage_assessment?.score || 50,
+           failure_id: failureId,
+           apology_message: result.apology?.body
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Gift request failed: ${res.status}`);
+      }
+
+      actD("gift");
+      showToast("Gift card successfully sent via Tremendous!", "success");
+    } catch (error) {
+      console.error("gift error:", error);
+      showToast("Couldn't send Tremendous gift.", "error");
+    } finally {
+      actL("gift", false);
     }
   }
 
@@ -2076,7 +2044,12 @@ function AppCore({ auth }) {
               )}
               {result.gift && (
                 <HoverCard delay="0.35s">
-                  <GiftCard gift={result.gift} />
+                  <GiftCard 
+                     gift={result.gift} 
+                     onSendGift={failureId !== "demo-run-001" ? sendGift : null}
+                     giftLoading={actionLoading.gift}
+                     giftDone={actionDone.gift}
+                  />
                 </HoverCard>
               )}
               {result.followup && (

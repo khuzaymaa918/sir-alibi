@@ -330,9 +330,11 @@ function MarketingConfessionForm({ onSubmit, onDemo, onContextInput }) {
         style={{
           width: "100%",
           padding: "14px",
-          background:
+          backgroundColor:
+            loading || !canSubmit ? "rgba(201,168,76,0.08)" : "transparent",
+          backgroundImage:
             loading || !canSubmit
-              ? "rgba(201,168,76,0.08)"
+              ? "none"
               : "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
           backgroundSize: "200% auto",
           animation:

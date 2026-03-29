@@ -4,6 +4,44 @@
 
 ---
 
+## Key features
+
+**1. AI Apology Workflow**:
+Craft deeply personalized, context-aware apologies using Anthropic Claude’s tool-use agentic loop. No generic templates—just real, human-sounding messages.
+
+**2. Seamless Integrations**:
+Auto-draft apologies in **Gmail**, schedule "make-up" sessions on **Google Calendar**, and send heartfelt gestures via **Tremendous Gifting**.
+
+**3. Interactive 3D Interface**:
+Built with **React Three Fiber**, Sir Alibi features a living 3D environment where your "Knight" waits to help you mend your social relationships.
+
+**4. Tremendous Gifting**:
+Automated gift card delivery based on the severity of the social "crime"—integrated directly with the Tremendous sandbox.
+
+**5. Secure Auth & State**:
+Managed by **Auth0** for user identity and **Mongoose/MongoDB** for persistent audit trails of your social recovery efforts.
+
+## Deep Dive: System Architecture & Agent Logic
+
+Sir Alibi operates on a sophisticated **multi-step agentic pipeline** powered by Anthropic's Claude. Unlike simple prompt-based bots, Sir Alibi breaks down the social recovery process into four distinct cognitive phases:
+
+### 1. Perception Phase
+The agent first extracts structured metadata from your raw input. It identifies the **relationship type** (e.g., manager, partner, friend), the **incident category**, and any **channel preferences**. This ensures the subsequent steps are grounded in the correct social context.
+
+### 2. Research & Gifting Phase
+The agent brainstorms personalized gift ideas and calculates the ideal **Follow-up Window**. It specifically cross-references your **Google Calendar** to find the next available "free window" for a face-to-face reconciliation, ensuring your follow-up isn't just timely, but actually possible.
+
+### 3. Reasoning & Strategy Phase
+This is the core "Alibi Engine." The agent evaluates the **severity** of the failure and selects an appropriate **Tone** and **Alibi Policy**:
+- **Full Alibi**: For high-stakes situations requiring a plausible narrative.
+- **Light Framing**: A softer approach that emphasizes intent over excuses.
+- **Direct**: A sincere, no-nonsense apology for close relationships.
+
+### 4. Actionable Output Generation
+The system drafts the **Gmail apology**, sets the **Calendar reminder**, and prepares the **Tremendous gift order**. For high-stakes incidents, the pipeline includes a **Safety Pause**, prompting for clarifying questions before finalizing the strategy.
+
+---
+
 ## Quick Start
 
 ### Prerequisites
