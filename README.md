@@ -122,6 +122,44 @@ curl -X POST http://localhost:3001/api/send-apology-email \
 If not connected: `401` with `{ "ok": false, "error": "NOT_AUTHENTICATED" }`.  
 Omit `to` to draft to yourself (uses the signed-in Gmail address).
 
+### Tremendous gifting (sandbox)
+
+Add to `backend/.env`:
+```
+TREMENDOUS_API_KEY=your_sandbox_key
+TREMENDOUS_API_URL=https://testflight.tremendous.com
+TREMENDOUS_ENVIRONMENT=testflight
+FUNDING_SOURCE_ID=your_funding_source_id
+CAMPAIGN_ID=your_campaign_id
+
+# Optional tier overrides (USD)
+GIFT_TIER_AMOUNT_LOW=15
+GIFT_TIER_AMOUNT_MEDIUM=30
+GIFT_TIER_AMOUNT_HIGH=75
+GIFT_TIER_AMOUNT_EXTREME=150
+```
+
+Tier mapping used by backend:
+- score `<= 0` → skip gift
+- score `< 20` → `$15`
+- score `< 50` → `$30`
+- score `< 100` → `$75`
+- score `>= 100` → `$150`
+
+Create a sandbox gift order:
+```bash
+curl -X POST http://localhost:3001/api/send-gift \
+  -H "Content-Type: application/json" \
+  -d '{
+    "recipient_name": "Taylor Smith",
+    "recipient_email": "taylor@example.com",
+    "ai_evaluation_score": 62,
+    "failure_id": "failure_123"
+  }'
+```
+
+`failure_id` is reused as Tremendous `external_id` for idempotency.
+
 ### Testing endpoints
 ```bash
 # Health check

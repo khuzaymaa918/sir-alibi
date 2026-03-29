@@ -4,6 +4,7 @@ const {
   isConnected,
   createDraftMessage,
 } = require("../services/googleGmail");
+const { sendGift } = require("../services/tremendousService");
 
 function escapeHtml(s) {
   return String(s)
@@ -160,10 +161,55 @@ async function scheduleFollowup(req, res) {
   }
 }
 
+async function sendTremendousGift(req, res) {
+  try {
+    const {
+      recipient_name,
+      recipient_email,
+      ai_evaluation_score,
+      external_id,
+      failure_id,
+    } = req.body || {};
+
+    if (ai_evaluation_score === undefined || ai_evaluation_score === null) {
+      return res.status(400).json({
+        ok: false,
+        error: "Missing ai_evaluation_score",
+      });
+    }
+
+    const response = await sendGift({
+      recipientName: recipient_name,
+      recipientEmail: recipient_email,
+      aiEvaluationScore: ai_evaluation_score,
+      externalId: external_id || failure_id,
+    });
+
+    return res.status(200).json({
+      ok: true,
+      status: response.status,
+      reward: response.reward,
+      external_id: response.external_id || external_id || failure_id || null,
+      order_id: response.order?.id || null,
+      message: response.message || null,
+    });
+  } catch (error) {
+    console.error("sendTremendousGift error:", error);
+    const msg = error?.message || "Failed to send gift";
+    const isClientError =
+      /required|must be a number|missing/i.test(msg);
+    return res.status(isClientError ? 400 : 500).json({
+      ok: false,
+      error: msg,
+    });
+  }
+}
+
 module.exports = {
   googleAuthStart,
   googleAuthCallback,
   authStatus,
   createEmailDraft,
   scheduleFollowup,
+  sendTremendousGift,
 };
