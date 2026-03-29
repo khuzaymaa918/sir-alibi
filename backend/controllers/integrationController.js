@@ -9,9 +9,6 @@ const {
 } = require("../services/googleGmail");
 const { sendGift } = require("../services/tremendousService");
 
-const { createCalendarEvent } = require("../services/googleCalendarService");
-const { googleTokensStore } = require("./googleController");
-
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, "&amp;")
@@ -67,8 +64,6 @@ async function googleAuthCallback(req, res) {
     if (!code || typeof code !== "string") {
       return res.status(400).send("Missing authorization code");
     }
-<<<<<<< HEAD
-=======
 
     // Calendar flow — store tokens for calendar and redirect with calendar flag
     if (state === "calendar") {
@@ -84,7 +79,6 @@ async function googleAuthCallback(req, res) {
     }
 
     // Gmail flow (default)
->>>>>>> tremendous
     await exchangeCodeForTokens(code);
 
     return res.redirect("http://localhost:5173/?google_gmail_connected=1");
@@ -161,11 +155,7 @@ async function createEmailDraft(req, res) {
   }
 }
 
-<<<<<<< HEAD
-function buildFollowupEvent({ followup, person_name }) {
-=======
 function buildFollowupEvent({ followup }) {
->>>>>>> tremendous
   const start = new Date();
   start.setDate(start.getDate() + 3);
   start.setHours(12, 0, 0, 0);

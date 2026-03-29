@@ -1,14 +1,5 @@
 const express = require("express");
 const router = express.Router();
-<<<<<<< HEAD
-const {
-  googleAuthStart,
-  googleAuthCallback,
-} = require("../controllers/googleController");
-
-router.get("/google/auth", googleAuthStart);
-router.get("/google/callback", googleAuthCallback);
-=======
 const { google } = require("googleapis");
 const { googleTokensStore } = require("../controllers/googleController");
 
@@ -18,7 +9,6 @@ router.get("/google/auth", (req, res) => {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      // Must use the SAME redirect URI registered in Google Cloud Console
       process.env.GOOGLE_REDIRECT_URI,
     );
     const url = oauth2Client.generateAuthUrl({
@@ -55,6 +45,6 @@ router.get("/google/callback", async (req, res) => {
     res.status(500).json({ ok: false, error: "Failed to complete Google auth" });
   }
 });
->>>>>>> tremendous
 
 module.exports = router;
+
