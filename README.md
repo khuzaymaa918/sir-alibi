@@ -1,8 +1,94 @@
 <img width="1279" height="816" alt="sir_alibi" src="https://github.com/user-attachments/assets/1a84cdfe-9467-4a56-b842-ab67365cb30b" />
 
-# Sir ALIBI :shield: Relationship repair assistant
+# Sir Alibi 🛡️
 
-MVP that turns a messy real-life slip (forgot a birthday, bailed on a move, ghosted a reply) into **grounded apology copy**, **gift angles**, and **action hooks** (Gmail draft + follow-up timing). The core is a **multi-step agentic pipeline**: each stage is an LLM call with a **strict JSON contract**, validated output, and explicit handoff to the next stage—not a single chat completion. Built at **YHack 2026**.
+> **AI-powered social recovery agent** — confess what you did wrong, let Sir Alibi craft the perfect apology, draft a Gmail, schedule a Calendar follow-up, and send a real gift card (Amazon, Starbucks, Subway, and more) matched to the severity of what you did. Powered by OpenAI via Lava AI Gateway. Built at YHack 2026.
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#api-endpoints">API Reference</a> ·
+  <a href="#tech-stack">Tech Stack</a>
+</p>
+
+<p align="center">
+  <img alt="Node 18+" src="https://img.shields.io/badge/node-18%2B-brightgreen">
+  <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-blue">
+  <img alt="Built at YHack 2026" src="https://img.shields.io/badge/built%20at-YHack%202026-orange">
+  <img alt="Powered by OpenAI" src="https://img.shields.io/badge/AI-OpenAI-412991">
+  <img alt="Lava Gateway" src="https://img.shields.io/badge/gateway-Lava-ff4d00">
+  <img alt="Tremendous" src="https://img.shields.io/badge/gifts-Tremendous%20API-red">
+</p>
+
+---
+
+## What is The Alibi?
+
+You forgot. You flaked. You went MIA.
+
+**Sir Alibi** is your autonomous relationship-repair agent. Tell it what you did wrong — it figures out the severity, constructs the alibi, writes the apology email, sends a real brand gift card (Amazon, Starbucks, Subway, etc.) scaled to how badly you messed up, and schedules the follow-up. You just show up.
+
+```
+Confess → Assess → Alibi → Apology → Gift → Follow-up
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- npm
+- Google Cloud project (Gmail API enabled)
+- OpenAI API key
+- Lava account (AI gateway)
+- Tremendous sandbox account
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-org/the-alibi.git
+cd the-alibi
+```
+
+### 2. Install dependencies
+
+```bash
+# Root (agent test harness)
+npm install
+
+# Backend (Express API)
+cd backend && npm install
+
+# Frontend (React + Vite)
+cd ../frontend && npm install
+```
+
+### 3. Configure environment
+
+```bash
+cp backend/.env.example backend/.env
+# Edit backend/.env with your keys — see Environment Variables below
+```
+
+### 4. Run the app
+
+Open **two terminals**:
+
+```bash
+# Terminal 1 — Backend (port 3001)
+cd backend
+node server.js
+```
+
+```bash
+# Terminal 2 — Frontend (port 5173)
+cd frontend
+npm run dev
+```
+
+Then open **http://localhost:5173** and confess your crime.
 
 ---
 
@@ -86,118 +172,5 @@ Set `DEMO_MODE=true` (see `agent/demoMode.ts` + `agent/config.ts`) for smaller p
 | `frontend/src/App.jsx` | Form, SSE client, Gmail draft + follow-up buttons |
 
 ---
-
-## Judge / developer setup
-
-### Prerequisites
-
-- **Node.js 20+** (Express 5 and tooling expect a current Node).
-- **Lava API key** (for LLM calls).
-- Optional: **Google Cloud** project with Gmail API + OAuth client (for real drafts).
-
-### 1. Agent dependencies (repo root)
-
-```bash
-npm install
-```
-
-Root `package.json` includes a harness script:
-
-```bash
-npm run dev
-# runs: tsx agent/testHarness.ts
-```
-
-Requires `LAVA_API_KEY` in the environment (or a `.env` at repo root if you add one locally).
-
-### 2. Backend
-
-```bash
-cd backend
-npm install
-cp .env.example .env
-# Edit .env: LAVA_API_KEY, and optionally Google OAuth vars (see below)
-npx tsx server.js
-```
-
-Health check:
-
-```bash
-curl http://localhost:3001/health
-```
-
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-cp .env.example .env   # if present; set VITE_API_URL=http://localhost:3001 when needed
-npm run dev
-```
-
-Open `http://localhost:5173`. If the backend is down, the app falls back to **local demo mode** (`App.jsx`).
-
-### 4. Environment variables (reference)
-
-**Backend (`backend/.env`)** — see `backend/.env.example`:
-
-- `PORT` — default `3001`
-- `LAVA_API_KEY` — required for live agent runs from the server
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` — for Gmail drafts
-- Optional agent tuning: `MODEL_FAST`, `MODEL_WRITE`, `MAX_TOKENS_*`, `TEMPERATURE`, `DEMO_MODE`
-
-**Frontend** — optional: `VITE_API_URL`, Auth0 `VITE_AUTH0_*`, `VITE_ELEVENLABS_API_KEY`
-
----
-
-## HTTP API (backend)
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Liveness |
-| `POST` | `/api/run-agent` | Body: form JSON (`name`, `relationship`, `failure_type`, …). Response: **SSE** stream; final event `agent_complete` with `result` shaped for the UI |
-| `GET` | `/api/auth/google/start` | Redirect to Google consent |
-| `GET` | `/api/auth/google/callback` | OAuth callback (exchanges code, stores tokens in memory) |
-| `GET` | `/api/auth/status` | `{ ok, connected }` |
-| `POST` | `/api/send-apology-email` | JSON: `subject`, `body` (or nested `apology`); creates Gmail **draft** |
-| `POST` | `/api/schedule-followup` | Validates payload; returns success (**Google Calendar is not called** in this stub—safe for demos that only need the success path) |
-
-Example Gmail draft (after OAuth):
-
-```bash
-curl -X POST http://localhost:3001/api/send-apology-email \
-  -H "Content-Type: application/json" \
-  -d '{"to":"you@gmail.com","subject":"Hello","body":"Draft body"}'
-```
-
----
-
-## Google OAuth + Gmail draft (minimal)
-
-1. In Google Cloud: enable **Gmail API**, configure **OAuth consent screen**, create **OAuth 2.0 Client ID** (Web application).
-2. **Authorized redirect URI** must match `GOOGLE_REDIRECT_URI` exactly, e.g. `http://localhost:3001/api/auth/google/callback`.
-3. Visit `http://localhost:3001/api/auth/google/start`, complete consent; expect “Google connected”.
-4. `curl http://localhost:3001/api/auth/status` → `"connected": true`.
-
-**Testing users:** While the app is *Testing*, add the judge’s Gmail under **Test users** on the consent screen.
-
----
-
-## Demo checklist (presentation)
-
-- [ ] `LAVA_API_KEY` set on the machine running the backend
-- [ ] Walk through **one** incident and mention the stages: perception → research → (optional pause) → reason → write
-- [ ] Show **Gmail draft** after OAuth (or explain in-memory token limitation on restart)
-- [ ] If Wi‑Fi fails: app can still run **demo mode** from the frontend
-- [ ] Have `npm run dev` (harness) ready to show **perception with/without** `PerceptionContext` snapshots
-
----
-
-## Prize submission checklist
-
-- [ ] Devpost submission with demo video
-- [ ] GitHub repo with commits during hackathon window
-- [ ] Team check-in / judging presence per organizer rules
-- [ ] Tracks: e.g. Personal AI Agents, Most Creative, Best UI/UX
 
 ---
