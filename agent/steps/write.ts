@@ -1,4 +1,5 @@
-import { callLLM, parseAssistantJson } from "../llm.js";
+import { config } from "../config.js";
+import { callLLMJson } from "../llmJson.js";
 import { writeOutSchema, type WriteOut } from "../schemas.js";
 import type { RepairState } from "../state.js";
 
@@ -13,21 +14,23 @@ alibiPolicy behavior:
 
 Match reasoning.tone and severity. Output one JSON object: apologyMessage, followUpMessage, optional optionalLightFraming (omit the field when unused).`;
 
-export async function writeStep(
-  state: RepairState,
-  userPromptAppend: string
-): Promise<RepairState> {
+export async function writeStep(state: RepairState): Promise<RepairState> {
   if (!state.research || !state.reasoning) {
     throw new Error("writeStep requires state.research and state.reasoning");
   }
 
-  const user =
-    `Scenario:\n${state.input}\n\nResearch:\n${JSON.stringify(state.research, null, 2)}\n\nReasoning:\n${JSON.stringify(state.reasoning, null, 2)}\n\nWrite messages JSON. Follow alibiPolicy=${state.reasoning.alibiPolicy} strictly.` +
-    userPromptAppend;
+  const user = `Scenario:\n${state.input}\n\nResearch:\n${JSON.stringify(state.research, null, 2)}\n\nReasoning:\n${JSON.stringify(state.reasoning, null, 2)}\n\nWrite messages JSON. Follow alibiPolicy=${state.reasoning.alibiPolicy} strictly.`;
 
-  const raw = await callLLM(SYSTEM, user);
-  const data = parseAssistantJson(raw);
-  const writing: WriteOut = writeOutSchema.parse(data);
+  const writing: WriteOut = await callLLMJson(
+    writeOutSchema,
+    {
+      model: config.modelWrite,
+      systemPrompt: SYSTEM,
+      maxTokens: config.maxTokensWrite,
+      temperature: config.temperature,
+    },
+    user
+  );
 
   return { ...state, writing };
 }

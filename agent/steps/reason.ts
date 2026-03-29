@@ -1,4 +1,5 @@
-import { callLLM, parseAssistantJson } from "../llm.js";
+import { config } from "../config.js";
+import { callLLMJson } from "../llmJson.js";
 import { reasonOutSchema, type ReasonOut } from "../schemas.js";
 import type { RepairState } from "../state.js";
 
@@ -19,21 +20,23 @@ writingRules: Exactly 2–4 short bullet strings the writer must obey (e.g. "no 
 Also set severity, tone, budgetRange [min, max], plan (repair steps), risks as before.
 budgetRange is two numbers in the user's likely currency context.`;
 
-export async function reasonStep(
-  state: RepairState,
-  userPromptAppend: string
-): Promise<RepairState> {
+export async function reasonStep(state: RepairState): Promise<RepairState> {
   if (!state.research) {
     throw new Error("reasonStep requires state.research");
   }
 
-  const user =
-    `Original scenario:\n${state.input}\n\nResearch JSON:\n${JSON.stringify(state.research, null, 2)}\n\nProduce reason JSON (include incidentType, alibiPolicy, writingRules with 2–4 items).` +
-    userPromptAppend;
+  const user = `Original scenario:\n${state.input}\n\nResearch JSON:\n${JSON.stringify(state.research, null, 2)}\n\nProduce reason JSON (include incidentType, alibiPolicy, writingRules with 2–4 items).`;
 
-  const raw = await callLLM(SYSTEM, user);
-  const data = parseAssistantJson(raw);
-  const reasoning: ReasonOut = reasonOutSchema.parse(data);
+  const reasoning: ReasonOut = await callLLMJson(
+    reasonOutSchema,
+    {
+      model: config.modelFast,
+      systemPrompt: SYSTEM,
+      maxTokens: config.maxTokensReason,
+      temperature: config.temperature,
+    },
+    user
+  );
 
   return { ...state, reasoning };
 }

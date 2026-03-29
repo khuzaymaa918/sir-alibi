@@ -1,4 +1,5 @@
-import { callLLM, parseAssistantJson } from "../llm.js";
+import { config } from "../config.js";
+import { callLLMJson } from "../llmJson.js";
 import { researchOutSchema, type ResearchOut } from "../schemas.js";
 import type { RepairState } from "../state.js";
 
@@ -15,17 +16,19 @@ purchaseLink rules: omit purchaseLink unless it is (a) a generic search URL such
 
 CRITICAL: Do NOT claim you verified stock, pricing, or shipping. You have NOT checked real availability.`;
 
-export async function researchStep(
-  state: RepairState,
-  userPromptAppend: string
-): Promise<RepairState> {
-  const user =
-    `Scenario:\n${state.input}\n\nReturn JSON for: clarifyingQuestions, inferredInterests, giftIdeas (title, priceRange, whyItFits, searchQuery as Google-pastable query, purchaseLink only per system rules or omit), followUpWindowSuggestion.` +
-    userPromptAppend;
+export async function researchStep(state: RepairState): Promise<RepairState> {
+  const user = `Scenario:\n${state.input}\n\nReturn JSON for: clarifyingQuestions, inferredInterests, giftIdeas (title, priceRange, whyItFits, searchQuery as Google-pastable query, purchaseLink only per system rules or omit), followUpWindowSuggestion.`;
 
-  const raw = await callLLM(SYSTEM, user);
-  const data = parseAssistantJson(raw);
-  const research: ResearchOut = researchOutSchema.parse(data);
+  const research: ResearchOut = await callLLMJson(
+    researchOutSchema,
+    {
+      model: config.modelFast,
+      systemPrompt: SYSTEM,
+      maxTokens: config.maxTokensResearch,
+      temperature: config.temperature,
+    },
+    user
+  );
 
   return { ...state, research };
 }

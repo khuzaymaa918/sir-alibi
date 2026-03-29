@@ -4,5 +4,18 @@ Repo for YHack26.
 
 ## Lava / LLM
 
-- Set **`LAVA_API_KEY`** to your Lava gateway secret key (Dashboard → Gateway → Secrets; values look like `aks_live_…`). The repair agent reads it in `agent/llm.ts` for `Authorization: Bearer …` on the forward endpoint.
-- Run the pipeline locally: **`npm install`** then **`npm run dev`** (runs `agent/testHarness.ts` via `tsx`).
+Configuration lives in **`agent/config.ts`** and reads **environment variables** (e.g. a project `.env` loaded by your shell or tooling). **Switch models and caps by editing env only.**
+
+| Variable | Required | Default |
+| --- | --- | --- |
+| **`LAVA_API_KEY`** | yes | — |
+| **`MODEL_FAST`** | no | `gpt-4o-mini` (research + reason) |
+| **`MODEL_WRITE`** | no | `gpt-4o-mini` (write step) |
+| **`MAX_TOKENS_RESEARCH`** | no | `400` |
+| **`MAX_TOKENS_REASON`** | no | `300` |
+| **`MAX_TOKENS_WRITE`** | no | `600` |
+| **`TEMPERATURE`** | no | `0.4` |
+
+- **`LAVA_API_KEY`**: Lava gateway secret (Dashboard → Gateway → Secrets; e.g. `aks_live_…`). Used as `Authorization: Bearer …` on the forward endpoint (`agent/llm.ts`).
+
+Run the pipeline locally: **`npm install`** then **`npm run dev`** (runs `agent/testHarness.ts` via `tsx`). The harness prints resolved model + token limits at startup, then **`runAlibiAgent(input)`** output as JSON (stable contract in `agent/runAgentContract.ts`).
