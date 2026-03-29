@@ -1282,7 +1282,7 @@ function AppCore({ auth }) {
   const [phase, setPhase] = useState("landing");
   /** Ordered tool ids finished before `currentStep` (active step is not included). */
   const [completedStepKeys, setCompletedStepKeys] = useState([]);
-  const [introDone, setIntroDone] = useState(false);
+  const [introDone, setIntroDone] = useState(true);
   const [steps, setSteps] = useState([]);
   const [currentStep, setCurrentStep] = useState(null);
   const runningStepRef = useRef(null);
@@ -1525,6 +1525,38 @@ function AppCore({ auth }) {
   const actL = (k, v) => setActionLoading((s) => ({ ...s, [k]: v }));
   const actD = (k) => setActionDone((s) => ({ ...s, [k]: true }));
 
+  // ── Agent step helpers ─────────────────────────────────────────────────────
+  const clearFakeRunTimers = useCallback(() => {
+    fakeRunTimersRef.current.forEach(clearTimeout);
+    fakeRunTimersRef.current = [];
+  }, []);
+
+  const applyAgentStep = useCallback((key) => {
+    if (runningStepRef.current) {
+      setCompletedStepKeys((prev) =>
+        prev.includes(runningStepRef.current) ? prev : [...prev, runningStepRef.current]
+      );
+    }
+    runningStepRef.current = key;
+    setCurrentStep(key);
+  }, []);
+
+  const finalizeRunningSteps = useCallback(() => {
+    if (runningStepRef.current) {
+      setCompletedStepKeys((prev) =>
+        prev.includes(runningStepRef.current) ? prev : [...prev, runningStepRef.current]
+      );
+      runningStepRef.current = null;
+    }
+    setCurrentStep(null);
+  }, []);
+
+  const forceAllStepsComplete = useCallback(() => {
+    setCompletedStepKeys(Object.keys(STEPS_META));
+    runningStepRef.current = null;
+    setCurrentStep(null);
+  }, []);
+
   // ── Demo run ───────────────────────────────────────────────────────────────
   const runDemo = useCallback(() => {
     setPhase("running");
@@ -1553,7 +1585,7 @@ function AppCore({ auth }) {
       FAKE_STEP_DWELL_MS * (keys.length - 1) + DEMO_FINAL_HOLD_MS,
     );
     fakeRunTimersRef.current.push(doneId);
-  }, [applyAgentStep, finalizeRunningSteps, clearFakeRunTimers]);
+  }, [applyAgentStep, finalizeRunningSteps, clearFakeRunTimers, setPhase, setResult, setFailureId, setCompletedStepKeys, setCurrentStep, setActionDone]);
 
   async function submitForm(formData) {
       const headers = { "Content-Type": "application/json" };
@@ -1561,72 +1593,47 @@ function AppCore({ auth }) {
         const token = await getAccessTokenSilently();
         if (token) headers["Authorization"] = `Bearer ${token}`;
       } catch {}
-      const apiUrl =
-        (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
-        "http://localhost:3001";
-      const res = await fetch(`${apiUrl}/api/run-agent`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(formData),
-      });
-      if (!res.ok) throw new Error(`Server ${res.status}`);
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const lines = decoder
-          .decode(value, { stream: true })
-          .split("\n")
-          .filter((l) => l.startsWith("data: "));
-        for (const line of lines) {
-          try {
-            const ev = JSON.parse(line.slice(6));
-            if (ev.type === "agent_complete") {
-              clearFakeRunTimers();
-              forceAllStepsComplete();
-              setResult(ev.result);
-              setFailureId(ev.failure_id);
-              setPhase("result");
-            }
-            if (ev.type === "agent_error") {
-              clearFakeRunTimers();
-              runningStepRef.current = null;
-              setCompletedStepKeys([]);
-              setCurrentStep(null);
-              showToast(`Agent error: ${ev.message}`, "error");
-              setPhase("form");
-            }
-          } catch {}
-        }
-      }
-
-      if (sseBuffer.trim()) {
-        const trimmed = sseBuffer.replace(/\r$/, "");
-        if (trimmed.startsWith("data: ")) {
-          try {
-            const ev = JSON.parse(trimmed.slice(6));
-            if (ev.type === "agent_complete") {
-              clearFakeRunTimers();
-              forceAllStepsComplete();
-              setResult(ev.result);
-              setFailureId(ev.failure_id);
-              setPhase("result");
-            }
-            if (ev.type === "agent_error") {
-              clearFakeRunTimers();
-              runningStepRef.current = null;
-              setCompletedStepKeys([]);
-              setCurrentStep(null);
-              showToast(`Agent error: ${ev.message}`, "error");
-              setPhase("form");
-            }
-          } catch {
-            /* ignore */
+      try {
+        const apiUrl =
+          (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+          "http://localhost:3001";
+        const res = await fetch(`${apiUrl}/api/run-agent`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(formData),
+        });
+        if (!res.ok) throw new Error(`Server ${res.status}`);
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const lines = decoder
+            .decode(value, { stream: true })
+            .split("\n")
+            .filter((l) => l.startsWith("data: "));
+          for (const line of lines) {
+            try {
+              const ev = JSON.parse(line.slice(6));
+              if (ev.type === "agent_complete") {
+                clearFakeRunTimers();
+                forceAllStepsComplete();
+                setResult(ev.result);
+                setFailureId(ev.failure_id);
+                setPhase("result");
+              }
+              if (ev.type === "agent_error") {
+                clearFakeRunTimers();
+                runningStepRef.current = null;
+                setCompletedStepKeys([]);
+                setCurrentStep(null);
+                showToast(`Agent error: ${ev.message}`, "error");
+                setPhase("form");
+              }
+            } catch {}
           }
         }
-      }
-    } catch {
+      } catch {
       clearFakeRunTimers();
       showToast("Backend unreachable — switching to demo mode.", "warning");
       setTimeout(runDemo, 500);
@@ -1744,15 +1751,7 @@ function AppCore({ auth }) {
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
 
       <div className="grain" style={{ minHeight: "100vh", background: T.bg }}>
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 0,
-            pointerEvents: "none",
-          }}
-        >
-        <div style={{ position: "relative", zIndex: 10 }}>
+        <div style={{ position: "relative", zIndex: 10, width: "100%" }}>
         {phase !== "landing" && (
           <header
             style={{
@@ -1876,7 +1875,7 @@ function AppCore({ auth }) {
             <LoadingCrest onDone={() => setIntroDone(true)} />
           )}
           {phase === "landing" && introDone && (
-            <div style={{ background: "transparent" }}>
+            <div style={{ background: "transparent", width: "100%" }}>
               <MarketingHome
                 onSummonKnight={() => setPhase("form")}
                 onDemo={runDemo}
@@ -1961,7 +1960,6 @@ function AppCore({ auth }) {
             </div>
           )}
 
-          {/* RESULT */}
           {phase === "result" && result && (
             <div
               style={{
@@ -2134,7 +2132,7 @@ function AppCore({ auth }) {
               </button>
               </div>
             </div>
-          )}
+            )}
         </main>
         </div>
         {phase === "running" && (
