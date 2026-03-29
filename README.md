@@ -1,3 +1,5 @@
+<img width="1279" height="816" alt="sir_alibi" src="https://github.com/user-attachments/assets/1a84cdfe-9467-4a56-b842-ab67365cb30b" />
+
 # Sir ALIBI :shield: Relationship repair assistant
 
 MVP that turns a messy real-life slip (forgot a birthday, bailed on a move, ghosted a reply) into **grounded apology copy**, **gift angles**, and **action hooks** (Gmail draft + follow-up timing). The core is a **multi-step agentic pipeline**: each stage is an LLM call with a **strict JSON contract**, validated output, and explicit handoff to the next stage—not a single chat completion. Built at **YHack 2026**.
