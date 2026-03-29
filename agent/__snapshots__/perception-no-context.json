@@ -1,0 +1,93 @@
+{
+  "runId": "1c2d417f-5f53-4a55-98ec-f4137e315111",
+  "ok": true,
+  "status": "ready_to_act",
+  "input": {
+    "incident": "Forgot my coworker Sarah's birthday; need a thoughtful repair message and gift idea.",
+    "personName": "",
+    "relationshipType": "coworker",
+    "channelPreference": "unsure"
+  },
+  "research": {
+    "clarifyingQuestions": [],
+    "giftIdeas": [
+      {
+        "title": "Same-day flowers or local florist bouquet",
+        "priceRange": "$35–75",
+        "whyItFits": "Neutral and widely appropriate; search locally rather than guessing inventory.",
+        "searchQuery": "same-day flower delivery near me"
+      },
+      {
+        "title": "Premium chocolate or snack gift box",
+        "priceRange": "$25–50",
+        "whyItFits": "Coworker-safe when interests are unknown; easy to verify via search.",
+        "searchQuery": "premium chocolate gift box delivery"
+      },
+      {
+        "title": "Small desk plant or succulent",
+        "priceRange": "$20–45",
+        "whyItFits": "Low-risk tone; avoids strong personal taste assumptions.",
+        "searchQuery": "small desk plant gift delivery"
+      }
+    ],
+    "followUpWindowDays": 3
+  },
+  "reasoning": {
+    "incidentType": "forgot_birthday",
+    "severity": "med",
+    "tone": "contrite",
+    "budgetRange": [
+      20,
+      50
+    ],
+    "alibiPolicy": "none",
+    "plan": [
+      "Acknowledge what went wrong without deflecting.",
+      "Offer one specific repair action (time, place, or gesture).",
+      "Ask what they need to feel respected.",
+      "Follow up once after a pause—no pressure."
+    ],
+    "risks": [
+      "They may need time before responding.",
+      "Long or repeated messages can feel like pressure."
+    ]
+  },
+  "writing": {
+    "subject": "Re: forgot birthday",
+    "apologyMessage": "Hi,\n\nI'm truly sorry—I messed up, and I'm sorry for the hurt it caused. I'd like to make this right; tell me what would help, or I can suggest a concrete next step on my end.",
+    "followUpMessage": "Hi,\n\nI'll give you space. When you're ready, I'm here—no pressure to reply quickly."
+  },
+  "actions": {
+    "email": {
+      "subject": "Re: forgot birthday",
+      "body": "Hi,\n\nI'm truly sorry—I messed up, and I'm sorry for the hurt it caused. I'd like to make this right; tell me what would help, or I can suggest a concrete next step on my end.\n\n—\n\nHi,\n\nI'll give you space. When you're ready, I'm here—no pressure to reply quickly.",
+      "sendEndpoint": "/api/send-apology-email"
+    },
+    "followup": {
+      "daysFromNow": 3,
+      "title": "Follow up: forgot birthday",
+      "notes": "• No excuses; center impact on them.\n• Keep it short.\n• Include one concrete repair action.\n• Do not invent facts or detailed alibis.\n\nPlan: Acknowledge what went wrong without deflecting. Offer one specific repair action (time, place, or gesture). Ask what they need to feel respected. Follow up once after a pause—no pressure.",
+      "scheduleEndpoint": "/api/schedule-followup"
+    },
+    "giftLinks": [
+      "https://www.google.com/search?q=same-day%20flower%20delivery%20near%20me",
+      "https://www.google.com/search?q=premium%20chocolate%20gift%20box%20delivery",
+      "https://www.google.com/search?q=small%20desk%20plant%20gift%20delivery"
+    ]
+  },
+  "debug": {
+    "usedFallback": true,
+    "pausedForUserInput": false,
+    "stepTimingsMs": {
+      "research": 0,
+      "reason": 0,
+      "write": 0
+    },
+    "logs": [
+      "perception: fallback — LAVA_API_KEY is required — set it in your environment or .env",
+      "research: fallback — LAVA_API_KEY is required — set it in your environment or .env",
+      "reason: fallback — LAVA_API_KEY is required — set it in your environment or .env",
+      "write: fallback — LAVA_API_KEY is required — set it in your environment or .env"
+    ]
+  }
+}
