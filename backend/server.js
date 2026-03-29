@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const googleRoutes = require("./routes/googleRoutes");
 
 const agentRoutes = require("./routes/agentRoutes");
 const integrationRoutes = require("./routes/integrationRoutes");
@@ -20,6 +21,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api", agentRoutes);
 app.use("/api", integrationRoutes);
+app.use("/api", googleRoutes);
 
 const PORT = process.env.PORT || 3001;
 
