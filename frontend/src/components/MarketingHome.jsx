@@ -530,6 +530,16 @@ export function MarketingHome({
     borderRadius: 2,
   };
 
+  const lightReveal = Math.min(Math.max(scrollProgress, 0), 1);
+  const lightStageOne = Math.min(lightReveal * 1.45, 1);
+  const lightStageTwo = Math.min(Math.max((lightReveal - 0.18) / 0.82, 0), 1);
+  const lightStageThree = Math.min(
+    Math.max((lightReveal - 0.42) / 0.58, 0),
+    1,
+  );
+  const leftParallax = lightReveal * 34;
+  const upParallax = lightReveal * 54;
+
   return (
     <div
       style={{
@@ -679,6 +689,88 @@ export function MarketingHome({
         <div
           style={{
             position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 2,
+            opacity: 0.34 + lightStageOne * 0.58,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: `calc(18% - ${leftParallax * 0.4}px)`,
+              top: `calc(9% - ${upParallax * 0.2}px)`,
+              width: "clamp(160px, 16vw, 260px)",
+              height: "clamp(160px, 16vw, 260px)",
+              borderRadius: "50%",
+              background:
+                `radial-gradient(circle, rgba(255,216,138,${0.18 + lightStageOne * 0.26}) 0%, rgba(201,168,76,${0.08 + lightStageOne * 0.12}) 34%, rgba(184,126,57,0.04) 58%, transparent 78%)`,
+              filter: "blur(16px)",
+              transform: `translate3d(0, ${upParallax * 0.18}px, 0) scale(${0.88 + lightStageTwo * 0.24})`,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: `calc(26% - ${leftParallax}px)`,
+              top: `calc(12% - ${upParallax * 0.16}px)`,
+              width: "clamp(180px, 20vw, 320px)",
+              height: "120vh",
+              background:
+                `linear-gradient(180deg, rgba(255,218,149,${0.12 + lightStageOne * 0.16}) 0%, rgba(237,179,84,${0.07 + lightStageTwo * 0.1}) 12%, rgba(201,168,76,0.03) 36%, transparent 72%)`,
+              filter: "blur(34px)",
+              transform: `perspective(900px) rotateZ(17deg) rotateY(10deg) translate3d(0, ${upParallax * 0.36}px, 0)`,
+              transformOrigin: "top center",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: `calc(54% + ${leftParallax * 0.38}px)`,
+              top: `calc(16% - ${upParallax * 0.28}px)`,
+              width: "clamp(120px, 12vw, 220px)",
+              height: "clamp(120px, 12vw, 220px)",
+              borderRadius: "50%",
+              background:
+                `radial-gradient(circle, rgba(255,206,122,${lightStageTwo * 0.24}) 0%, rgba(201,168,76,${lightStageTwo * 0.12}) 40%, transparent 76%)`,
+              filter: "blur(18px)",
+              transform: `translate3d(0, ${upParallax * 0.22}px, 0)`,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: "50% -10% -6% -12%",
+              background:
+                `radial-gradient(ellipse at 45% 50%, rgba(217,171,90,${0.12 + lightStageTwo * 0.16}) 0%, rgba(111,78,39,0.08) 28%, rgba(14,12,8,0.02) 56%, transparent 74%)`,
+              filter: "blur(54px)",
+              transform: `translate3d(${leftParallax * 0.16}px, ${-upParallax * 0.12}px, 0) scale(${1 + lightStageThree * 0.08})`,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: "58% -18% -14% -18%",
+              background:
+                `linear-gradient(180deg, rgba(214,175,102,0) 0%, rgba(193,147,66,${0.06 + lightStageThree * 0.08}) 28%, rgba(93,67,34,${0.1 + lightStageThree * 0.08}) 54%, transparent 100%)`,
+              filter: "blur(44px)",
+              transform: `translate3d(${leftParallax * 0.1}px, ${upParallax * 0.28}px, 0)`,
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: "16% 26% 8% 24%",
+              background:
+                "radial-gradient(ellipse at 50% 44%, rgba(14,12,8,0.44) 0%, rgba(14,12,8,0.28) 30%, rgba(14,12,8,0.12) 52%, transparent 74%)",
+              filter: "blur(34px)",
+              transform: `translate3d(${leftParallax * 0.08}px, ${upParallax * 0.1}px, 0) scale(${1 + lightStageTwo * 0.03})`,
+            }}
+          />
+        </div>
+        <div
+          style={{
+            position: "absolute",
             top: "50%",
             left: 0,
             right: 0,
@@ -789,11 +881,93 @@ export function MarketingHome({
               style={{
                 position: "absolute",
                 inset: 0,
-                zIndex: 2,
+                zIndex: 4,
               }}
             >
               <KnightHero />
             </div>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                zIndex: 2,
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: `calc(11% - ${leftParallax * 0.28}px)`,
+                  top: `calc(2% - ${upParallax * 0.22}px)`,
+                  width: "clamp(110px, 12vw, 190px)",
+                  height: "clamp(110px, 12vw, 190px)",
+                  borderRadius: "50%",
+                  background:
+                    `radial-gradient(circle, rgba(255,219,146,${0.12 + lightStageTwo * 0.24}) 0%, rgba(207,164,70,${0.06 + lightStageTwo * 0.14}) 38%, transparent 76%)`,
+                  filter: "blur(16px)",
+                  transform: `translate3d(0, ${upParallax * 0.18}px, 0) scale(${0.92 + lightStageThree * 0.24})`,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  left: `calc(18% - ${leftParallax * 0.72}px)`,
+                  top: `calc(7% - ${upParallax * 0.1}px)`,
+                  width: "clamp(150px, 16vw, 260px)",
+                  height: "116%",
+                  background:
+                    `linear-gradient(180deg, rgba(255,220,152,${0.1 + lightStageTwo * 0.16}) 0%, rgba(221,169,77,${0.06 + lightStageThree * 0.12}) 18%, rgba(117,82,39,0.06) 44%, transparent 74%)`,
+                  filter: "blur(28px)",
+                  transform: `rotateZ(14deg) translate3d(0, ${upParallax * 0.34}px, 0)`,
+                  transformOrigin: "top center",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: `calc(5% + ${leftParallax * 0.38}px)`,
+                  top: `calc(22% - ${upParallax * 0.28}px)`,
+                  width: "clamp(120px, 11vw, 190px)",
+                  height: "clamp(220px, 28vw, 360px)",
+                  background:
+                    `radial-gradient(ellipse at 50% 20%, rgba(255,203,118,${lightStageThree * 0.16}) 0%, rgba(201,168,76,${lightStageThree * 0.1}) 36%, transparent 74%)`,
+                  filter: "blur(24px)",
+                  transform: `translate3d(0, ${upParallax * 0.14}px, 0)`,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: "42% -14% -8% -10%",
+                  background:
+                    `radial-gradient(ellipse at 42% 36%, rgba(243,191,95,${0.08 + lightStageThree * 0.12}) 0%, rgba(120,84,38,${0.08 + lightStageThree * 0.08}) 33%, rgba(14,12,8,0.02) 58%, transparent 78%)`,
+                  filter: "blur(46px)",
+                  transform: `translate3d(${leftParallax * 0.12}px, ${upParallax * 0.2}px, 0)`,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  inset: "56% -18% -18% -12%",
+                  background:
+                    `linear-gradient(180deg, rgba(227,184,92,0) 0%, rgba(178,130,59,${0.05 + lightStageTwo * 0.08}) 24%, rgba(72,53,28,${0.12 + lightStageThree * 0.08}) 58%, transparent 100%)`,
+                  filter: "blur(42px)",
+                  transform: `translate3d(${leftParallax * 0.08}px, ${upParallax * 0.3}px, 0)`,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                zIndex: 3,
+                background:
+                  "radial-gradient(ellipse at 50% 52%, rgba(14,12,8,0.52) 0%, rgba(14,12,8,0.32) 24%, rgba(14,12,8,0.14) 42%, transparent 70%)",
+                filter: "blur(18px)",
+                transform: `translate3d(${leftParallax * 0.04}px, ${upParallax * 0.08}px, 0)`,
+              }}
+            />
           </div>
           <div
             style={{
