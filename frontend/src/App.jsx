@@ -663,10 +663,43 @@ function ApologyCard({ apology, onDraftEmail, emailLoading, emailDone }) {
 }
 
 // ─── Gift Card ────────────────────────────────────────────────────────────────
-function GiftCard({ gift }) {
+function GiftCard({ gift, onSendGift, giftLoading, giftDone, recipientEmail }) {
   return (
     <div style={cardWrap("#9B59B6")}>
-      <CardHead icon="🎁" title="Recovery Offering" color="#7D3C98" />
+      <CardHead icon="🎁" title="Recovery Offering" color="#7D3C98">
+        {onSendGift && (
+          <ActionBtn
+            onClick={onSendGift}
+            disabled={giftLoading || giftDone}
+            color={giftDone ? T.green : "#7D3C98"}
+          >
+            {giftLoading ? (
+              <><Spinner size={11} color="#7D3C98" /> Sending…</>
+            ) : giftDone ? (
+              "✓ Gift Sent!"
+            ) : (
+              "🎁 Send Gift Card"
+            )}
+          </ActionBtn>
+        )}
+      </CardHead>
+
+      {onSendGift && recipientEmail && !giftDone && (
+        <div
+          style={{
+            marginBottom: 14,
+            padding: "8px 12px",
+            background: "rgba(155,89,182,0.07)",
+            border: "1.5px solid rgba(155,89,182,0.20)",
+            borderRadius: T.radiusSm,
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#7D3C98",
+          }}
+        >
+          🎯 Will be delivered to <strong>{recipientEmail}</strong> via Tremendous
+        </div>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div>
@@ -884,6 +917,7 @@ function InputForm({ onSubmit, onDemo }) {
     budget: "20_50",
     medium: "text",
     additional_context: "",
+    recipient_email: "",
   });
   const [loading, setLoading] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -1059,7 +1093,6 @@ function InputForm({ onSubmit, onDemo }) {
         </div>
       </div>
 
-      {/* Context */}
       <div style={{ marginBottom: 14 }}>
         {lbl("Anything the agent should know")}
         <textarea
@@ -1067,6 +1100,19 @@ function InputForm({ onSubmit, onDemo }) {
           placeholder="She's been stressed with deadlines lately, we've been friends 10 years…"
           value={form.additional_context}
           onChange={(e) => set("additional_context", e.target.value)}
+          onFocus={(e) => (e.target.style.borderColor = T.orange)}
+          onBlur={(e) => (e.target.style.borderColor = T.border)}
+        />
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        {lbl("Their email (for gift card delivery)")}
+        <input
+          type="email"
+          style={field}
+          placeholder="sarah@example.com — leave blank to skip gift card"
+          value={form.recipient_email}
+          onChange={(e) => set("recipient_email", e.target.value)}
           onFocus={(e) => (e.target.style.borderColor = T.orange)}
           onBlur={(e) => (e.target.style.borderColor = T.border)}
         />
@@ -1409,6 +1455,8 @@ function AppCore({ auth }) {
   const fakeRunTimersRef = useRef([]);
   const [result, setResult] = useState(null);
   const [failureId, setFailureId] = useState(null);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const [toast, setToast] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
   const [actionDone, setActionDone] = useState({});
@@ -1497,6 +1545,8 @@ function AppCore({ auth }) {
     setCurrentStep(null);
     setResult(null);
     setActionDone({});
+    setRecipientEmail(formData.recipient_email?.trim() || "");
+    setRecipientName(formData.name?.trim() || "");
     startFakeLoadingProgress();
 
     try {
@@ -1667,6 +1717,44 @@ function AppCore({ auth }) {
       showToast("Couldn't reach Calendar integration.", "error");
     } finally {
       actL("followup", false);
+    }
+  }
+
+  async function sendGift() {
+    if (!failureId || !recipientEmail) return;
+    actL("gift", true);
+    try {
+      const headers = { "Content-Type": "application/json" };
+      try {
+        const t = await getAccessTokenSilently();
+        if (t) headers["Authorization"] = `Bearer ${t}`;
+      } catch {}
+      const apiUrl =
+        (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+        "http://localhost:3001";
+      const severityScoreMap = { low: 10, medium: 35, high: 75, critical: 120 };
+      const sev = result?.damage_assessment?.severity || "medium";
+      const score = severityScoreMap[sev] ?? 35;
+      const apologyBody = result?.apology?.body || "";
+      const giftRes = await fetch(`${apiUrl}/api/send-gift`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          recipient_name: recipientName || result?.research?.name || "Friend",
+          recipient_email: recipientEmail,
+          ai_evaluation_score: score,
+          failure_id: failureId,
+          apology_message: apologyBody,
+        }),
+      });
+      const giftJson = await giftRes.json().catch(() => ({}));
+      if (!giftRes.ok) throw new Error(giftJson.error || "Gift send failed");
+      actD("gift");
+      showToast("🎁 Gift card sent to " + recipientEmail + "!", "success");
+    } catch (e) {
+      showToast(e?.message || "Couldn't send gift card.", "error");
+    } finally {
+      actL("gift", false);
     }
   }
 
@@ -1973,7 +2061,19 @@ function AppCore({ auth }) {
                   emailDone={actionDone.email}
                 />
               )}
-              {result.gift && <GiftCard gift={result.gift} />}
+              {result.gift && (
+                <GiftCard
+                  gift={result.gift}
+                  onSendGift={
+                    failureId !== "demo-run-001" && recipientEmail
+                      ? sendGift
+                      : null
+                  }
+                  giftLoading={actionLoading.gift}
+                  giftDone={actionDone.gift}
+                  recipientEmail={recipientEmail}
+                />
+              )}
               {result.followup && (
                 <FollowUpCard
                   followup={result.followup}
