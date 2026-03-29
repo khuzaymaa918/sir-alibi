@@ -1,32 +1,47 @@
-# Project: ShopFront
 
-Next.js 14 e-commerce application with App Router, Stripe payments, and Prisma ORM.
+    "The Alibi" The trivial problem: you forgot someone's birthday / missed a meeting / flaked on a friend. The agent constructs a complete, airtight alibi — a believable narrative with supporting evidence, a draft apology that sounds genuinely human, a recovery gift strategy personalized to that person's interests, and a scheduled follow-up to repair the relationship. It's absurd, it's funny, it's technically an autonomous multi-step reasoning agent doing real research and real writing. And everyone in the room has needed this.
 
-## Code Style
+The demo: a judge confesses a recent social failure. The agent builds the alibi live.
 
-- TypeScript strict mode, no `any` types
-- Use named exports, not default exports
-- CSS: Tailwind utility classes, no custom CSS files
+Input: "I forgot Sarah's birthday, she's my coworker"
+          ↓
+Step 1: RESEARCH AGENT
+— Searches for gift ideas based on inferred interests
+— Looks up florists / delivery services with availability
+— Checks calendar for follow-up window
+          ↓
+Step 2: REASONING AGENT
+— Assesses severity of the social failure
+— Decides tone: humorous vs genuinely contrite
+— Decides gift price range based on relationship type
+          ↓
+Step 3: WRITING AGENT
+— Drafts alibi narrative (what "happened")
+— Drafts apology message personalized to relationship
+— Drafts follow-up message for 3 days later
+          ↓
+Step 4: ACTION AGENT
+— Schedules follow-up reminder in calendar (GCal MCP)
+— Drafts email ready to send (Gmail MCP)
+— Surfaces gift purchase link with pre-filled cart
+          ↓
+Step 5: OBSERVE
+— Did you send it? Did they respond?
+— Updates relationship repair status
 
-## Commands
+can you further breakdown this:
+Person 3 — Frontend & Demo
+Owns: Everything the judge sees and experiences
 
-- `npm run dev`: Start development server (port 3000)
-- `npm run test`: Run Jest tests
-- `npm run test:e2e`: Run Playwright end-to-end tests
-- `npm run lint`: ESLint check
-- `npm run db:migrate`: Run Prisma migrations
+React frontend — input form (who did you fail, how badly, relationship type)
+Live agent progress display — show each step completing in real time
+Output cards — alibi narrative, apology draft, gift recommendation, follow-up scheduled
+ElevenLabs integration — play the alibi narrative aloud
+Demo script — rehearse the live judge confession moment
 
-## Architecture
+Time breakdown:
 
-- `/app`: Next.js App Router pages and layouts
-- `/components/ui`: Reusable UI components
-- `/lib`: Utilities and shared logic
-- `/prisma`: Database schema and migrations
-- `/app/api`: API routes
-
-## Important Notes
-
-- NEVER commit .env files
-- The Stripe webhook handler in /app/api/webhooks/stripe must validate signatures
-- Product images are stored in Cloudinary, not locally
-- See @docs/authentication.md for auth flow details
+Hours8pm start Frontend scaffold, input form, basic layout
+Hours : Agent progress UI, output card components
+Hours: ElevenLabs voice integration, polish
+Hours 11 am end Full demo run-through, fix anything that breaks on stage
