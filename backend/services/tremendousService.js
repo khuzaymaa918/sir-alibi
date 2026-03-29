@@ -1,5 +1,3 @@
-const { Configuration, Environments, OrdersApi } = require("tremendous");
-
 const DEFAULT_TIER_AMOUNTS = Object.freeze({
   low: 15,
   medium: 30,

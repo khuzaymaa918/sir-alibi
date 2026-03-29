@@ -1727,6 +1727,20 @@ function AppCore({ auth }) {
       {toast && <Toast {...toast} onDismiss={() => setToast(null)} />}
 
       <div className="grain" style={{ minHeight: "100vh", background: T.bg }}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+          }}
+        >
+          <KnightScene
+            isGenerating={phase === "running"}
+            crimeLevel={currentCrimeLevel || "minor"}
+            currentPhase={currentStep || ""}
+          />
+        </div>
         <div style={{ position: "relative", zIndex: 10, width: "100%" }}>
         {phase !== "landing" && (
           <header
@@ -1872,8 +1886,8 @@ function AppCore({ auth }) {
                 zIndex: 10,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "flex-end",
-                padding: "0 5% 0 0",
+                justifyContent: "center",
+                padding: "0 20px",
               }}
             >
               <div
@@ -1917,16 +1931,6 @@ function AppCore({ auth }) {
                     autonomously.
                   </p>
                 </div>
-              </div>
-              <div
-                style={{
-                  background: T.white,
-                  border: `1.5px solid ${T.border}`,
-                  borderRadius: T.radiusLg,
-                  padding: 22,
-                  boxShadow: T.shadow,
-                }}
-              >
                 <InputForm
                   onSubmit={submitForm}
                   onDemo={runDemo}

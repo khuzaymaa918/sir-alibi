@@ -1030,24 +1030,30 @@ export function MarketingHome({
             >
               Confess your crime.
             </h2>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 400,
-                color: "var(--parchment-dim)",
-                lineHeight: 1.65,
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              Tell the agent what happened. It handles everything else —
-              autonomously.
-            </p>
           </div>
-          <MarketingConfessionForm
-            onSubmit={onSummonKnight}
-            onDemo={onDemo}
-            onContextInput={onContextInput}
-          />
+          <button
+            type="button"
+            onClick={() => onSummonKnight()}
+            style={{
+              width: "100%",
+              padding: "14px",
+              background: "linear-gradient(90deg, #B8312F, #C9A84C, #B8312F)",
+              backgroundSize: "200% auto",
+              animation: "gradientShift 3s ease infinite",
+              border: "1px solid transparent",
+              borderRadius: 10,
+              color: "#0E0C08",
+              fontSize: 15,
+              fontWeight: 700,
+              fontFamily: "'DM Sans', sans-serif",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            Begin Your Alibi
+          </button>
         </div>
       </section>
 
