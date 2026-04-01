@@ -83,8 +83,8 @@ Lava account (AI gateway)
 Tremendous sandbox account
 
 1. Clone
-bashgit clone https://github.com/zhihankshi/yhack2026.git
-cd yhack2026
+bashgit clone https://github.com/khuzaymaa918/sir-alibi.git
+cd sir-alibi
 2. Install
 bash# Root
 npm install
