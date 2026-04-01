@@ -2,12 +2,12 @@
 
 <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=28&duration=3000&pause=1000&color=0A66C2&center=true&vCenter=true&width=700&lines=Sir+Alibi+%F0%9F%9B%A1%EF%B8%8F;AI-Powered+Relationship+Repair+Agent" alt="Sir Alibi" />
 
-<p align="center">
+<p align="left">
   <strong>Confess what you did wrong. Sir Alibi handles the rest.</strong><br/>
   Apology drafted. Gift sent. Follow-up scheduled. Delivered in your own voice.
 </p>
 
-<p align="center">
+<p align="left">
   <img src="https://img.shields.io/badge/Built%20at-YHack%202026-orange?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Node-18%2B-brightgreen?style=for-the-badge&logo=node.js&logoColor=white" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" />
 </p>
 
-<p align="center">
+<p align="left">
   <img src="https://img.shields.io/badge/Gmail%20API-EA4335?style=for-the-badge&logo=gmail&logoColor=white" />
   <img src="https://img.shields.io/badge/Google%20Calendar-4285F4?style=for-the-badge&logo=googlecalendar&logoColor=white" />
   <img src="https://img.shields.io/badge/Spotify-1DB954?style=for-the-badge&logo=spotify&logoColor=white" />
