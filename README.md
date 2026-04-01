@@ -1,6 +1,6 @@
 <div align="left">
 
-<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=28&duration=3000&pause=1000&color=00D4FF&center=false&vCenter=false&width=700&lines=Sir+Alibi+%F0%9F%9B%A1%EF%B8%8F;Apology+Drafted.+Gift+Sent.+Voice+Cloned.;5+Live+Integrations.+24+Hours.+One+Agent.;Confess.+Repair.+Move+On." alt="Sir Alibi" />
+<img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=28&duration=3000&pause=1000&color=00D4FF&center=false&vCenter=false&width=700&lines=Sir+Alibi+%F0%9F%9B%A1%EF%B8%8F;Apology+Drafted.+Gift+Sent.+Voice+Cloned.;Confess.+Repair.+Move+On." alt="Sir Alibi" />
 
 <p align="left">
   <strong>Confess what you did wrong. Sir Alibi handles the rest.</strong><br/>
