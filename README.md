@@ -176,9 +176,9 @@ Open `http://localhost:5173` and confess your crime.
 | Name | Role |
 |------|------|
 | [Khuzayma Mushtaq](https://github.com/khuzaymaa918) | Backend, integrations, Google OAuth, Gmail API, endpoints |
-| [Abdullah Rashid](https://github.com) | — |
-| [Manas Mehra](https://github.com/manasmehra-rgb) | — |
-| [Zhihan Shi](https://github.com/zhihankshi) | — |
+| [Abdullah Rashid](https://github.com) | Frontend, UI/UX |
+| [Manas Mehra](https://github.com/manasmehra-rgb) | Agent pipeline, LLM integration |
+| [Zhihan Shi](https://github.com/zhihankshi) | Agent architecture, TypeScript, repo setup |
 
 ---
 
